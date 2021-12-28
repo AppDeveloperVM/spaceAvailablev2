@@ -1,0 +1,7 @@
+{
+  "name": "spaceAvailablev2",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
