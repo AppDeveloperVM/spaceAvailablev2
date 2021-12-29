@@ -34,6 +34,12 @@ export class Tab1Page {
       attribution: 'edupala.com © Angular LeafLet',
     }).addTo(this.map);
 
+    L.Marker.prototype.options.icon = L.icon({
+      iconUrl: 'marker-icon.png',
+      iconRetinaUrl: 'marker-icon.png',
+      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
+    });
+
     /*
     L.esri.Vector.vectorBasemapLayer(this.basemapEnum, {
       apiKey: this.apiKey
@@ -74,7 +80,18 @@ export class Tab1Page {
     const layerGroup = L.layerGroup().addTo(this.map);
 
     //Search Control
-    const searchControl = new ELG.Geosearch();
+    const searchControl = new ELG.Geosearch({
+      position: 'topright',
+      placeholder: 'Enter an address or place e.g. 1 York St',
+      useMapBounds: false,
+      providers: [ELG.arcgisOnlineProvider({
+        apikey: this.apiKey, // replace with your api key - https://developers.arcgis.com
+        nearby: {
+          lat: -33.8688,
+          lng: 151.2093
+        }
+      })]
+    }).addTo(this.map);
     const results = new L.LayerGroup().addTo(this.map);
 
     searchControl
@@ -123,7 +140,22 @@ export class Tab1Page {
       }
     });
 
-    
+    // click addEventListener
+    console.log(new ELG.ReverseGeocode());
+    this.map.on("click", (e) => {
+      new ELG.ReverseGeocode().latlng(e.latlng).run((error, result) => {
+        if (error) {
+          return;
+        }
+        if (this.marker && this.map.hasLayer(this.marker))
+          this.map.removeLayer(this.marker);
+
+        this.marker = L.marker(result.latlng)
+          .addTo(this.map)
+          .bindPopup(result.address.Match_addr)
+          .openPopup();
+      });
+    });
 
     
   }
