@@ -25,7 +25,8 @@ export class Tab1Page {
   }
 
   leafletMap() {  
-
+    //initial settings
+    //  Map options, Map rendering, Marker options
     this.map = new L.Map('map1', {
       minZoom: 2
     }).setView([41.390205,2.154007], 14);
@@ -33,20 +34,31 @@ export class Tab1Page {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: 'edupala.com © Angular LeafLet',
     }).addTo(this.map);
-
-    L.Marker.prototype.options.icon = L.icon({
-      iconUrl: 'marker-icon.png',
-      iconRetinaUrl: 'marker-icon.png',
-      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
-    });
-
     /*
     L.esri.Vector.vectorBasemapLayer(this.basemapEnum, {
       apiKey: this.apiKey
     }).addTo(this.map);
     */
 
-    // Create the select dropdown and add to the top-right of the map
+    L.Marker.prototype.options.icon = L.icon({
+      iconUrl: 'marker-icon.png',
+      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
+    });
+
+    var classicIcon = L.icon({
+      iconUrl: 'marker-icon.png',
+      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
+  
+      iconSize:     [28, 45], // size of the icon
+      shadowSize:   [50, 64], // size of the shadow
+      iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+      shadowAnchor: [24, 110],  // the same for the shadow
+      popupAnchor:  [-8, -76] // point from which the popup should open relative to the iconAnchor
+    });
+
+    //-- Create Controls --
+
+    //- Select dropdown - add to the top-right of the map
     L.Control.PlacesSelect = L.Control.extend({
       onAdd: function(map) {
         // Array of options
@@ -77,13 +89,16 @@ export class Tab1Page {
       position: 'topright'
     }).addTo(this.map);
 
-    const layerGroup = L.layerGroup().addTo(this.map);
 
-    //Search Control
+    //- Search Control
+    const layerGroup = L.layerGroup().addTo(this.map);
+    
     const searchControl = new ELG.Geosearch({
       position: 'topright',
       placeholder: 'Enter an address or place e.g. 1 York St',
       useMapBounds: false,
+      showMarker: true,
+      marker: this.marker,
       providers: [ELG.arcgisOnlineProvider({
         apikey: this.apiKey, // replace with your api key - https://developers.arcgis.com
         nearby: {
@@ -92,27 +107,21 @@ export class Tab1Page {
         }
       })]
     }).addTo(this.map);
-    const results = new L.LayerGroup().addTo(this.map);
 
+    const results = new L.LayerGroup().addTo(this.map);
     searchControl
       .on("results", function (data) {
         results.clearLayers();
         for (let i = data.results.length - 1; i >= 0; i--) {
-          results.addLayer(L.marker(data.results[i].latlng));
+          results.addLayer( 
+            L.marker( 
+              data.results[i].latlng).bindPopup(`<b>${data.results[i].properties.PlaceName}</b></br>${data.results[i].properties.Place_addr}`) 
+            );
+
         }
       })
       .addTo(this.map);
 
-    var classicIcon = L.icon({
-      iconUrl: 'marker-icon.png',
-      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
-  
-      iconSize:     [28, 45], // size of the icon
-      shadowSize:   [50, 64], // size of the shadow
-      iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
-      shadowAnchor: [24, 110],  // the same for the shadow
-      popupAnchor:  [-8, -76] // point from which the popup should open relative to the iconAnchor
-    });
     // When the selected where clause changes, do the geocode
     const select = document.getElementById('optionsSelect');
     select.addEventListener('change', () => {
@@ -140,24 +149,21 @@ export class Tab1Page {
       }
     });
 
-    // click addEventListener
-    console.log(new ELG.ReverseGeocode());
-    this.map.on("click", (e) => {
-      new ELG.ReverseGeocode().latlng(e.latlng).run((error, result) => {
-        if (error) {
-          return;
-        }
-        if (this.marker && this.map.hasLayer(this.marker))
-          this.map.removeLayer(this.marker);
-
-        this.marker = L.marker(result.latlng)
-          .addTo(this.map)
-          .bindPopup(result.address.Match_addr)
-          .openPopup();
-      });
-    });
-
+    //this.enableMapNewMarkerClickListener();
     
+  }
+
+  enableMapNewMarkerClickListener(){
+    const clickable = new L.LayerGroup().addTo(this.map);
+      this.map.on('click', function (e) {
+        const latlng = e.latlng
+
+        clickable.clearLayers();
+        clickable.addLayer(
+          L.marker(latlng)
+          //bindPopup(`<b>${data.results[i].properties.PlaceName}</b></br>${data.results[i].properties.Place_addr}`) 
+        );
+      });
   }
 
   ionViewWillLeave() {
