@@ -13,6 +13,7 @@ import * as ELG from "esri-leaflet-geocoder";
 })
 export class Tab1Page {
   map: L.Map;
+  marker;
   propertyList = [];
   apiKey = "AAPK0932e4c918794ef190d526dca145eafa4gkMAbVk_i2vyUy3k--v1M6oER9i6hoOtBDBFsk-xxs9CEyAGNrjFlHNKFMbVOEi";
   basemapEnum = "ArcGIS:Navigation";//Streets
@@ -72,17 +73,29 @@ export class Tab1Page {
 
     const layerGroup = L.layerGroup().addTo(this.map);
 
+    //Search Control
+    const searchControl = new ELG.Geosearch();
+    const results = new L.LayerGroup().addTo(this.map);
+
+    searchControl
+      .on("results", function (data) {
+        results.clearLayers();
+        for (let i = data.results.length - 1; i >= 0; i--) {
+          results.addLayer(L.marker(data.results[i].latlng));
+        }
+      })
+      .addTo(this.map);
+
     var classicIcon = L.icon({
       iconUrl: 'marker-icon.png',
-      //shadowUrl: 'leaf-shadow.png',
+      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
   
       iconSize:     [28, 45], // size of the icon
       shadowSize:   [50, 64], // size of the shadow
       iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
-      shadowAnchor: [4, 62],  // the same for the shadow
+      shadowAnchor: [24, 110],  // the same for the shadow
       popupAnchor:  [-8, -76] // point from which the popup should open relative to the iconAnchor
     });
-
     // When the selected where clause changes, do the geocode
     const select = document.getElementById('optionsSelect');
     select.addEventListener('change', () => {
