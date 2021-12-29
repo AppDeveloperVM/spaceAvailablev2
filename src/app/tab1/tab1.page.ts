@@ -1,5 +1,11 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable max-len */
+/* eslint-disable object-shorthand */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prefer-arrow/prefer-arrow-functions */
 import { Component } from '@angular/core';
-import "leaflet/dist/leaflet.css";
+import 'leaflet/dist/leaflet.css';
 import * as L from "leaflet";
 import "esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css";
 import "esri-leaflet-geocoder/dist/esri-leaflet-geocoder";
@@ -24,7 +30,7 @@ export class Tab1Page {
     this.leafletMap();
   }
 
-  leafletMap() {  
+  leafletMap() {
     //initial settings
     //  Map options, Map rendering, Marker options
     this.map = new L.Map('map1', {
@@ -42,13 +48,13 @@ export class Tab1Page {
 
     L.Marker.prototype.options.icon = L.icon({
       iconUrl: 'marker-icon.png',
-      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
+      shadowUrl: 'https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png',
     });
 
-    var classicIcon = L.icon({
+    const classicIcon = L.icon({
       iconUrl: 'marker-icon.png',
-      shadowUrl: "https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png",
-  
+      shadowUrl: 'https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png',
+
       iconSize:     [28, 45], // size of the icon
       shadowSize:   [50, 64], // size of the shadow
       iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
@@ -68,7 +74,7 @@ export class Tab1Page {
         select.setAttribute("id", "optionsSelect");
         select.setAttribute("style", "font-size: 16px;padding:4px 8px;");
         optionsInfos.forEach((optionsInfo) => {
-          let option = L.DomUtil.create("option");
+          const option = L.DomUtil.create("option");
           option.value = optionsInfo[0];
           option.innerHTML = optionsInfo[1];
           select.appendChild(option);
@@ -81,9 +87,10 @@ export class Tab1Page {
       }
     });
 
+    // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     L.control.placesSelect = function(opts) {
       return new L.Control.PlacesSelect(opts);
-    }
+    };
 
     L.control.placesSelect({
       position: 'topright'
@@ -92,7 +99,6 @@ export class Tab1Page {
 
     //- Search Control
     const layerGroup = L.layerGroup().addTo(this.map);
-    
     const searchControl = new ELG.Geosearch({
       position: 'topright',
       placeholder: 'Enter an address or place e.g. 1 York St',
@@ -110,12 +116,14 @@ export class Tab1Page {
 
     const results = new L.LayerGroup().addTo(this.map);
     searchControl
-      .on("results", function (data) {
+      .on('results', function(data) {
+        layerGroup.clearLayers();
         results.clearLayers();
         for (let i = data.results.length - 1; i >= 0; i--) {
-          results.addLayer( 
-            L.marker( 
-              data.results[i].latlng).bindPopup(`<b>${data.results[i].properties.PlaceName}</b></br>${data.results[i].properties.Place_addr}`) 
+          results.addLayer(
+            L.marker(
+              // eslint-disable-next-line max-len
+              data.results[i].latlng).bindPopup(`<b>${data.results[i].properties.PlaceName}</b></br>${data.results[i].properties.Place_addr}`)
             );
 
         }
@@ -125,7 +133,7 @@ export class Tab1Page {
     // When the selected where clause changes, do the geocode
     const select = document.getElementById('optionsSelect');
     select.addEventListener('change', () => {
-      var selectValue = (<HTMLInputElement>document.getElementById('optionsSelect')).value;
+      const selectValue = (<HTMLInputElement>document.getElementById('optionsSelect')).value;
 
       if(selectValue !== '') {
         const geocoder = ELG.geocodeService({
@@ -134,7 +142,7 @@ export class Tab1Page {
         geocoder.geocode()
           .category(selectValue)
           .nearby(this.map.getCenter(), 10)
-          .run(function (error, response) {
+          .run(function(error, response) {
           if (error) {
             return;
           }
@@ -150,18 +158,17 @@ export class Tab1Page {
     });
 
     //this.enableMapNewMarkerClickListener();
-    
   }
 
   enableMapNewMarkerClickListener(){
     const clickable = new L.LayerGroup().addTo(this.map);
-      this.map.on('click', function (e) {
-        const latlng = e.latlng
+      this.map.on('click', function(e) {
+        const latlng = e.latlng;
 
         clickable.clearLayers();
         clickable.addLayer(
           L.marker(latlng)
-          //bindPopup(`<b>${data.results[i].properties.PlaceName}</b></br>${data.results[i].properties.Place_addr}`) 
+          //bindPopup(`<b>${data.results[i].properties.PlaceName}</b></br>${data.results[i].properties.Place_addr}`)
         );
       });
   }
