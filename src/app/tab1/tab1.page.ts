@@ -21,6 +21,7 @@ export class Tab1Page {
   map: L.Map;
   marker;
   propertyList = [];
+  locate;
   apiKey = "AAPK0932e4c918794ef190d526dca145eafa4gkMAbVk_i2vyUy3k--v1M6oER9i6hoOtBDBFsk-xxs9CEyAGNrjFlHNKFMbVOEi";
   basemapEnum = "ArcGIS:Navigation";//Streets
 
@@ -46,9 +47,15 @@ export class Tab1Page {
     }).addTo(this.map);
     */
 
+    // Custom icons
     L.Marker.prototype.options.icon = L.icon({
       iconUrl: 'marker-icon.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.4.0/dist/images/marker-shadow.png',
+      iconSize:     [28, 45], // size of the icon
+      shadowSize:   [50, 64], // size of the shadow
+      iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+      shadowAnchor: [24, 110],  // the same for the shadow
+      popupAnchor:  [-7.7, -76] // point from which the popup should open relative to the iconAnchor
     });
 
     const classicIcon = L.icon({
@@ -61,6 +68,25 @@ export class Tab1Page {
       shadowAnchor: [24, 110],  // the same for the shadow
       popupAnchor:  [-8, -76] // point from which the popup should open relative to the iconAnchor
     });
+
+    const locate = new L.LayerGroup().addTo(this.map);
+    this.locate = locate;
+    this.map.locate({setView: true, watch: true}) /* This will return map so you can do chaining */
+        .on('locationfound', function(e){
+            const marker = L.marker([e.latitude, e.longitude]).bindPopup('Your are here :)');
+            const circle = L.circle([e.latitude, e.longitude], e.accuracy/2, {
+                weight: 1,
+                color: 'blue',
+                fillColor: '#cacaca',
+                fillOpacity: 0.2
+            });
+            locate.addLayer(marker);
+            locate.addLayer(circle);
+        })
+       .on('locationerror', function(e){
+            console.log(e);
+            alert("Location access denied.");
+        });
 
     //-- Create Controls --
 
@@ -117,6 +143,7 @@ export class Tab1Page {
     const results = new L.LayerGroup().addTo(this.map);
     searchControl
       .on('results', function(data) {
+        locate.clearLayers();
         layerGroup.clearLayers();
         results.clearLayers();
         for (let i = data.results.length - 1; i >= 0; i--) {
@@ -148,8 +175,9 @@ export class Tab1Page {
           }
 
           layerGroup.clearLayers();
+          locate.clearLayers();
           response.results.forEach((searchResult) => {
-            L.marker(searchResult.latlng, {icon: classicIcon})
+            L.marker(searchResult.latlng)
               .addTo(layerGroup)
               .bindPopup(`<b>${searchResult.properties.PlaceName}</b></br>${searchResult.properties.Place_addr}`);
           });
@@ -165,6 +193,7 @@ export class Tab1Page {
       this.map.on('click', function(e) {
         const latlng = e.latlng;
 
+        this.locate.clearLayers();
         clickable.clearLayers();
         clickable.addLayer(
           L.marker(latlng)
