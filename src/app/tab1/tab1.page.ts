@@ -10,6 +10,7 @@ import * as L from "leaflet";
 import "esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css";
 import "esri-leaflet-geocoder/dist/esri-leaflet-geocoder";
 import * as ELG from "esri-leaflet-geocoder";
+import 'leaflet.locatecontrol';
 
 
 @Component({
@@ -35,7 +36,7 @@ export class Tab1Page {
     //initial settings
     //  Map options, Map rendering, Marker options
     this.map = new L.Map('map1', {
-      minZoom: 2
+      minZoom: 1
     }).setView([41.390205,2.154007], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -69,36 +70,37 @@ export class Tab1Page {
       popupAnchor:  [-8, -76] // point from which the popup should open relative to the iconAnchor
     });
 
-    const locate = new L.LayerGroup().addTo(this.map);
-    this.locate = locate;
-    this.map.locate({setView: true, watch: true}) /* This will return map so you can do chaining */
-        .on('locationfound', function(e){
-            const marker = L.marker([e.latitude, e.longitude]).bindPopup('Your are here :)');
-            const circle = L.circle([e.latitude, e.longitude], e.accuracy/2, {
-                weight: 1,
-                color: 'blue',
-                fillColor: '#cacaca',
-                fillOpacity: 0.2
-            });
-            locate.addLayer(marker);
-            locate.addLayer(circle);
-        })
-       .on('locationerror', function(e){
-            console.log(e);
-            alert("Location access denied.");
-        });
+    //---------- Create Controls ----------
 
-    //-- Create Controls --
+    //- Locate me control
+    L.control.locate({
+      //setView: true,
+      //watch: true,
+      enableHighAccuracy: true,
+      position: 'topleft',
+      showPopup: true,
+      strings: {
+          title: "Show me where I am!",
+          popup: 'My position'
+      },
+      onLocationError: this.onLocationError,
+    }).addTo(this.map);
 
     //- Select dropdown - add to the top-right of the map
     L.Control.PlacesSelect = L.Control.extend({
       onAdd: function(map) {
         // Array of options
-        const optionsInfos = [["","Choose a category..."],["Coffee shop","Coffee shop"],["Gas station","Gas station"],["Food","Food"],["Hotel","Hotel"],["Parks and Outdoors","Parks and Outdoors"]];
+        const optionsInfos = [["","Choose a category..."],
+        ["Coffee shop","Coffee shop"],
+        ["Gas station","Gas station"],
+        ["Food","Food"],
+        ["Hotel","Hotel"],
+        ["Parks and Outdoors","Parks and Outdoors"]];
         // Create select
         const select = L.DomUtil.create("select","");
         select.setAttribute("id", "optionsSelect");
         select.setAttribute("style", "font-size: 16px;padding:4px 8px;");
+
         optionsInfos.forEach((optionsInfo) => {
           const option = L.DomUtil.create("option");
           option.value = optionsInfo[0];
@@ -131,19 +133,22 @@ export class Tab1Page {
       useMapBounds: false,
       showMarker: true,
       marker: this.marker,
+      //maxMarkers: 1,
       providers: [ELG.arcgisOnlineProvider({
         apikey: this.apiKey, // replace with your api key - https://developers.arcgis.com
         nearby: {
           lat: -33.8688,
           lng: 151.2093
-        }
+        },
+        cacheLocation: true,
+        initialZoomLevel: 12,
+        flyTo: true
       })]
     }).addTo(this.map);
 
     const results = new L.LayerGroup().addTo(this.map);
     searchControl
       .on('results', function(data) {
-        locate.clearLayers();
         layerGroup.clearLayers();
         results.clearLayers();
         for (let i = data.results.length - 1; i >= 0; i--) {
@@ -175,7 +180,6 @@ export class Tab1Page {
           }
 
           layerGroup.clearLayers();
-          locate.clearLayers();
           response.results.forEach((searchResult) => {
             L.marker(searchResult.latlng)
               .addTo(layerGroup)
@@ -186,6 +190,10 @@ export class Tab1Page {
     });
 
     //this.enableMapNewMarkerClickListener();
+  }
+
+  onLocationError(){
+    alert("Location access denied.");
   }
 
   enableMapNewMarkerClickListener(){
